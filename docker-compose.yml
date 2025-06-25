@@ -1,6 +1,9 @@
 services:
   kanban:
-    image: ghcr.io/plankanban/planka:latest
+    build:
+      context: ../planka
+      dockerfile: Dockerfile
+    # image: planka-workflow:latest
     container_name: kanban
     restart: unless-stopped
     ports:
@@ -15,7 +18,9 @@ services:
       - DEFAULT_ADMIN_PASSWORD=${PLANKA_ADMIN_PASSWORD}
       - DEFAULT_ADMIN_NAME=${PLANKA_ADMIN_NAME}
       - DEFAULT_ADMIN_USERNAME=${PLANKA_ADMIN_USERNAME}
-      - NODE_ENV=production
+      - NODE_ENV=development
+      # Webhooks for real-time core app integration
+      - WEBHOOKS=${WEBHOOKS}
     depends_on:
       postgres:
         condition: service_healthy
@@ -24,6 +29,8 @@ services:
       - kanban-user-avatars:/app/public/user-avatars
       - kanban-project-background-images:/app/public/project-background-images
       - kanban-attachments:/app/private/attachments
+    networks:
+      - workflow-system-network
 
   postgres:
     image: postgres:15-alpine
@@ -51,6 +58,8 @@ services:
       - "max_connections=100"
       - "-c"
       - "shared_buffers=256MB"
+    networks:
+      - workflow-system-network
 
 volumes:
   kanban-db:
@@ -59,3 +68,7 @@ volumes:
   kanban-user-avatars:
   kanban-project-background-images:
   kanban-attachments:
+
+networks:
+  workflow-system-network:
+   external: true
