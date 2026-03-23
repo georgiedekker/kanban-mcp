@@ -1,0 +1,108 @@
+"""Pydantic models for Planka API types."""
+
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, Field, ConfigDict
+
+
+class Project(BaseModel):
+    """Project model matching Planka API schema."""
+
+    id: str = Field(description="Unique identifier for the project")
+    created_at: datetime = Field(
+        alias="createdAt", description="When the project was created"
+    )
+    updated_at: Optional[datetime] = Field(
+        alias="updatedAt", default=None, description="When the project was last updated"
+    )
+    name: str = Field(description="Name/title of the project")
+    description: Optional[str] = Field(
+        default=None, description="Detailed description of the project"
+    )
+    background_type: Optional[str] = Field(
+        alias="backgroundType",
+        default=None,
+        description="Type of background (color/gradient/image)",
+    )
+    background_gradient: Optional[str] = Field(
+        alias="backgroundGradient",
+        default=None,
+        description="Gradient background definition",
+    )
+    is_hidden: bool = Field(
+        alias="isHidden", default=False, description="Whether the project is hidden"
+    )
+    owner_project_manager_id: Optional[str] = Field(
+        alias="ownerProjectManagerId",
+        default=None,
+        description="ID of the owner/project manager",
+    )
+    background_image_id: Optional[str] = Field(
+        alias="backgroundImageId",
+        default=None,
+        description="ID of the background image",
+    )
+    is_favorite: bool = Field(
+        alias="isFavorite",
+        default=False,
+        description="Whether the project is favorited",
+    )
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class Board(BaseModel):
+    """Board model matching Planka API schema."""
+
+    id: str = Field(description="Unique identifier for the board")
+    project_id: str = Field(
+        alias="projectId", description="ID of the project the board belongs to"
+    )
+    position: float = Field(description="Position of the board within the project")
+    name: str = Field(description="Name/title of the board")
+    default_view: str = Field(
+        alias="defaultView",
+        default="kanban",
+        description="Default view for the board (kanban/grid/list)",
+    )
+    default_card_type: str = Field(
+        alias="defaultCardType",
+        default="project",
+        description="Default card type for new cards",
+    )
+    limit_card_types_to_default_one: bool = Field(
+        alias="limitCardTypesToDefaultOne",
+        default=False,
+        description="Whether to limit card types to default one",
+    )
+    always_display_card_creator: bool = Field(
+        alias="alwaysDisplayCardCreator",
+        default=False,
+        description="Whether to always display the card creator",
+    )
+    expand_task_lists_by_default: bool = Field(
+        alias="expandTaskListsByDefault",
+        default=False,
+        description="Whether to expand task lists by default",
+    )
+    created_at: Optional[datetime] = Field(
+        alias="createdAt", default=None, description="When the board was created"
+    )
+    updated_at: Optional[datetime] = Field(
+        alias="updatedAt", default=None, description="When the board was last updated"
+    )
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ProjectsResponse(BaseModel):
+    """Response model for listing projects."""
+
+    items: list[Project]
+
+
+class BoardsResponse(BaseModel):
+    """Response model for listing boards."""
+
+    items: list[Board]

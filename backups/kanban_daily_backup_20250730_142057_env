@@ -1,0 +1,70 @@
+# Planka Configuration
+PLANKA_PORT=3333
+BASE_URL=http://mini2.local:3333
+TRUST_PROXY=1
+SECRET_KEY=secretkey
+
+# Admin User
+PLANKA_ADMIN_EMAIL=demo@demo.demo
+PLANKA_ADMIN_PASSWORD=demo
+PLANKA_ADMIN_NAME="Demo User"
+PLANKA_ADMIN_USERNAME=demo
+
+# PostgreSQL Configuration
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=planka
+
+# MCP-Kanban Configuration
+MCP_KANBAN_PORT=3019
+PLANKA_PORT=3333
+PLANKA_BASE_URL=http://planka:${PLANKA_PORT}
+PLANKA_AGENT_EMAIL=${PLANKA_ADMIN_EMAIL}
+PLANKA_AGENT_PASSWORD=${PLANKA_ADMIN_PASSWORD}
+SERVER_PORT=${MCP_KANBAN_PORT} 
+
+# Enhanced Planka Webhooks for Real-time Core App Integration
+WEBHOOKS='[{
+  "url": "http://core-app:8634/api/v1/flow-events/webhook",
+  "accessToken": "planka-core-integration-token-2025",
+  "events": [
+    "cardCreate",
+    "cardUpdate", 
+    "cardMove",
+    "cardDelete",
+    "cardMembershipCreate",
+    "cardMembershipDelete",
+    "cardLabelCreate",
+    "cardLabelDelete",
+    "commentCreate",
+    "commentUpdate",
+    "commentDelete",
+    "attachmentCreate",
+    "attachmentDelete",
+    "taskCreate",
+    "taskUpdate",
+    "taskDelete",
+    "boardMembershipCreate",
+    "boardMembershipUpdate",
+    "boardMembershipDelete",
+    "listCreate",
+    "listUpdate",
+    "listDelete"
+  ],
+  "excludedEvents": [
+    "notificationCreate",
+    "notificationUpdate",
+    "notificationDelete"
+  ]
+}]'
+
+# Webhook Configuration Notes:
+# - Events are sent in real-time to core app webhook endpoint
+# - Access token is used for webhook authentication (optional)
+# - All card, comment, attachment, and task events are captured
+# - Board and list management events included for comprehensive tracking
+# - Notification events excluded to avoid noise
+# - URL points to the webhook receiver we just configured
+
+# Planka API Access Token for Scripts
+PLANKA_API_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjM2N2YxZTZmLTkwYTItNGY2Zi1iYTI5LTc5YzNiOWUyNzk1OCJ9.eyJpYXQiOjE3NTA5NTczMDcsImV4cCI6MTc4MjQ5MzMwNywic3ViIjoiMTU0MTM4MDMzNDE3MDQwNzk0NiJ9.w83tyTtyArRu96g2mZsQJjn6HrQb0r9HCGwtv9_DlAA"

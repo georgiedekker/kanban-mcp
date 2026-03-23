@@ -1,0 +1,104 @@
+services:
+  kanban:
+    build:
+      context: ../planka
+      dockerfile: Dockerfile
+    # image: planka-workflow:latest
+    container_name: kanban
+    restart: unless-stopped
+    ports:
+      - "${PLANKA_PORT}:1337"
+    environment:
+      - BASE_URL=${BASE_URL}
+      - TRUST_PROXY=${TRUST_PROXY}
+      # - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@kanban-postgres:5432/${POSTGRES_DB}?sslmode=disable
+      - SECRET_KEY=${SECRET_KEY}
+      # Admin credentials
+      - DEFAULT_ADMIN_EMAIL=${PLANKA_ADMIN_EMAIL}
+      - DEFAULT_ADMIN_PASSWORD=${PLANKA_ADMIN_PASSWORD}
+      - DEFAULT_ADMIN_NAME=${PLANKA_ADMIN_NAME}
+      - DEFAULT_ADMIN_USERNAME=${PLANKA_ADMIN_USERNAME}
+      - NODE_ENV=production
+      # Webhooks for real-time core app integration
+      - WEBHOOKS=${WEBHOOKS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - kanban-files:/app/public/user-files
+      - kanban-user-avatars:/app/public/user-avatars
+      - kanban-project-background-images:/app/public/project-background-images
+      - kanban-attachments:/app/private/attachments
+    networks:
+      - workflow-system-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: kanban-postgres
+    restart: unless-stopped
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - type: volume
+        source: kanban-db
+        target: /var/lib/postgresql/data
+      # Mount backup script and output directory for pre-stop hooks
+      - type: bind
+        source: ./backup-on-stop.sh
+        target: /backup-on-stop.sh
+        read_only: true
+      - type: bind
+        source: ${HOME}/kanban-mcp-backups
+        target: /backup
+    # Custom stop signal and grace period for backup
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    command:
+      - /bin/sh
+      - -c
+      - |
+        # Make backup script executable
+        chmod +x /backup-on-stop.sh
+        
+        # Setup signal handler for graceful shutdown with backup
+        trap '/backup-on-stop.sh; exit 0' TERM
+        
+        # Start PostgreSQL in background
+        docker-entrypoint.sh postgres \
+          -c max_connections=100 \
+          -c shared_buffers=256MB &
+        
+        # Wait for PostgreSQL to be ready
+        until pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}; do
+          sleep 1
+        done
+        
+        echo "PostgreSQL ready with backup hooks enabled"
+        
+        # Keep container running and wait for signals
+        wait
+    networks:
+      - workflow-system-network
+
+volumes:
+  kanban-db:
+    name: kanban-db-persistent
+  kanban-files:
+  kanban-user-avatars:
+  kanban-project-background-images:
+  kanban-attachments:
+
+networks:
+  workflow-system-network:
+    driver: bridge

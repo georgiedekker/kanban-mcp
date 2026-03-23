@@ -1,0 +1,48 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: [self-hosted, linux, amd64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Generate lockfile
+        run: pnpm install --lockfile-only
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+
+      - name: Login to registry
+        run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login 192.168.1.114:5000 -u registry --password-stdin
+      - name: Build and push kanban-mcp image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --file Dockerfile \
+            --tag 192.168.1.114:5000/kanban-mcp:latest \
+            --push \
+            .
+
+      - name: Cleanup
+        if: always()
+        run: docker system prune -f || true

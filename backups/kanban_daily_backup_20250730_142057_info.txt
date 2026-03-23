@@ -1,0 +1,25 @@
+Kanban-MCP Daily Backup Information
+====================================
+Backup Date: Wed Jul 30 14:21:01 CEST 2025
+Backup Name: kanban_daily_backup_20250730_142057
+PostgreSQL Container: kanban-postgres
+
+Database Backup: kanban_daily_backup_20250730_142057_full.sql (full PostgreSQL dump)
+Planka DB: kanban_daily_backup_20250730_142057_planka.dump (compressed planka database)
+
+Volumes Backed Up:
+- kanban_daily_backup_20250730_142057_kanban-files.tar.gz
+- kanban_daily_backup_20250730_142057_kanban-user-avatars.tar.gz
+- kanban_daily_backup_20250730_142057_kanban-project-background-images.tar.gz
+- kanban_daily_backup_20250730_142057_kanban-attachments.tar.gz
+- kanban_daily_backup_20250730_142057_kanban-db-persistent.tar.gz
+
+Configuration Files:
+- kanban_daily_backup_20250730_142057_docker-compose.yml
+- kanban_daily_backup_20250730_142057_env
+
+To restore this backup:
+1. Stop containers: ./compose-with-backup.sh down
+2. Restore database: docker exec -i kanban-postgres pg_restore -U postgres -d planka < kanban_daily_backup_20250730_142057_planka.dump
+3. Restore volumes using docker volume create and docker run commands
+4. Start containers: ./compose-with-backup.sh up
